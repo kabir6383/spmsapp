@@ -1,0 +1,13 @@
+{
+  "relays": {
+    "Relay_H1": 1.0,
+    "Relay_H2": 1.0,
+    "Relay_Floor_0": 1.0,
+    "Relay_Floor_1": 0.999,
+    "Relay_Floor_2": 0.999,
+    "Relay_Floor_3": 0.9977,
+    "Relay_Floor_4": 0.9977,
+    "Relay_Floor_5": 0.998
+  },
+  "overall_accuracy": 0.9989
+}
