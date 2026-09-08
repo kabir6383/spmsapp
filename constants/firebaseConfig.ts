@@ -1,17 +1,26 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
-import { initializeAuth, getReactNativePersistence, getAuth } from "firebase/auth";
+import { initializeAuth, getAuth } from "firebase/auth";
+import { getReactNativePersistence } from "firebase/auth/react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
+const requiredEnv = (name: string): string => {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required Firebase environment variable: ${name}`);
+  }
+  return value;
+};
+
 const firebaseConfig = {
-  apiKey: "AIzaSyB5WFy4-O-AczKBNKpMRdc_kVPGFJgpL84",
-  authDomain: "spms-69e9e.firebaseapp.com",
-  databaseURL: "https://spms-69e9e-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "spms-69e9e",
-  storageBucket: "spms-69e9e.firebasestorage.app",
-  messagingSenderId: "31822915944",
-  appId: "1:31822915944:web:68aa54e65575b4b6f38edd"
+  apiKey: requiredEnv('EXPO_PUBLIC_FIREBASE_API_KEY'),
+  authDomain: requiredEnv('EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN'),
+  databaseURL: requiredEnv('EXPO_PUBLIC_FIREBASE_DATABASE_URL'),
+  projectId: requiredEnv('EXPO_PUBLIC_FIREBASE_PROJECT_ID'),
+  storageBucket: requiredEnv('EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET'),
+  messagingSenderId: requiredEnv('EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID'),
+  appId: requiredEnv('EXPO_PUBLIC_FIREBASE_APP_ID')
 };
 
 const app = initializeApp(firebaseConfig);

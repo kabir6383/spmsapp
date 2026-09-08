@@ -9,7 +9,7 @@ import Animated, { useAnimatedStyle, useAnimatedProps, withRepeat, withTiming, w
 import Svg, { Path } from 'react-native-svg';
 import { ref, onValue, set, get, update } from 'firebase/database';
 import { database, auth as firebaseAuth } from '@/constants/firebaseConfig';
-import { signInAnonymously, signInWithEmailAndPassword } from 'firebase/auth';
+import { signInAnonymously } from 'firebase/auth';
 import { useRouter } from 'expo-router';
 import { AuthContext } from './_layout';
 
@@ -37,8 +37,8 @@ export default function AppIndex() {
   const [uiMode, setUiMode] = useState('day');
   const [integrity, setIntegrity] = useState({ score: 100, status: 'NORMAL' });
   const [isDbConnected, setIsDbConnected] = useState(false);
-  const [aiAudit, setAiAudit] = useState<{shed_active: boolean; shed_floors: string; power_w: number; ldr_dark: boolean; ml_active: boolean; last_update: number}>({
-    shed_active: false, shed_floors: '[]', power_w: 0, ldr_dark: false, ml_active: false, last_update: 0,
+  const [aiAudit, setAiAudit] = useState<{shed_active: boolean; shed_floors: string; power_w: number; ldr_dark: boolean; ldr_msg: string; ml_active: boolean; last_update: number}>({
+    shed_active: false, shed_floors: '[]', power_w: 0, ldr_dark: false, ldr_msg: 'STABLE', ml_active: false, last_update: 0,
   });
 
   const isAdminOrEngineer = userData?.role === 'Admin' || userData?.role === 'Senior Engineer' || userData?.role === 'Junior Engineer';
@@ -71,22 +71,15 @@ export default function AppIndex() {
     });
     setFloorLoads({ ground: 0, floor1: 0, floor2: 0, floor3: 0, floor4: 0, floor5: 0 });
     setFloorPir({ ground: 0, floor1: 0, floor2: 0, floor3: 0, floor4: 0, floor5: 0 });
-    setAiAudit({ shed_active: false, shed_floors: '[]', power_w: 0, ldr_dark: false, ml_active: false, last_update: 0 });
+    setAiAudit({ shed_active: false, shed_floors: '[]', power_w: 0, ldr_dark: false, ldr_msg: 'STABLE', ml_active: false, last_update: 0 });
     setIsControllerOnline(false);
   };
 
   useEffect(() => {
     if (!isLoggedIn) return;
 
-    // Industrial Authentication: Attempt Anonymous entry first, fallback to system account
     signInAnonymously(firebaseAuth).catch(err => {
-      if (err.code === 'auth/admin-restricted-operation') {
-        // Fallback to pre-created system account if Anonymous is disabled in console
-        signInWithEmailAndPassword(firebaseAuth, 'app@spms.local', 'SPMS_Internal_123')
-          .catch(innerErr => console.error("System Auth Failed:", innerErr));
-      } else {
-        console.error("Auth Error:", err);
-      }
+      console.error("Auth Error:", err);
     });
 
     // Monitor Firebase Connection Status
@@ -201,21 +194,6 @@ export default function AppIndex() {
 
   const handleLogin = async () => {
     try {
-      // Master Admin Bypass for initial setup
-      if (engineerId.trim().toLowerCase() === 'admin' && password.trim() === 'admin') {
-          const uData = { firstName: 'System', lastName: 'Administrator', role: 'Admin', email: 'admin@spms.local' };
-          setUserData(uData);
-          setIsLoggedIn(true);
-          try {
-            if (Platform.OS === 'web') {
-              localStorage.setItem('spms_engineer', JSON.stringify(uData));
-            } else {
-              await AsyncStorage.setItem('spms_engineer', JSON.stringify(uData));
-            }
-          } catch (e) {}
-          return;
-      }
-
       const userId = engineerId.trim().toLowerCase().replace(/\./g, '_');
       const userRef = ref(database, `spms/users/${userId}`);
       const snapshot = await get(userRef);

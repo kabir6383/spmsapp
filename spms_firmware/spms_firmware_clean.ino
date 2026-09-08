@@ -3,13 +3,9 @@
 #include <PZEM004Tv30.h>
 #include <time.h>
 #include <esp_task_wdt.h>
+#include "secrets.h"
 
 /* --- INDUSTRIAL CONFIGURATION --- */
-#define WIFI_NAME   "Kabir"
-#define WIFI_PASS   "96111@2026"
-#define DB_URL      "https://spms-69e9e-default-rtdb.asia-southeast1.firebasedatabase.app"
-#define DB_SECRET   "ezorufwFfVTeVa0lE96pBEJ3noi668ECN1WkXBNS"
-
 /* --- PIN ASSIGNMENTS --- */
 #define PZ_RX       4
 #define PZ_TX       5
