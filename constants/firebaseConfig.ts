@@ -1,9 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
-import { initializeAuth, getAuth } from "firebase/auth";
-import { getReactNativePersistence } from "firebase/auth/react-native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
+import { getAuth } from "firebase/auth";
 
 const requiredEnv = (name: string): string => {
   const value = process.env[name];
@@ -26,9 +23,4 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const database = getDatabase(app);
 
-// Use conditional initialization to support both Web and Native
-export const auth = Platform.OS === 'web' 
-  ? getAuth(app) 
-  : initializeAuth(app, {
-      persistence: getReactNativePersistence(AsyncStorage)
-    });
+export const auth = getAuth(app);
