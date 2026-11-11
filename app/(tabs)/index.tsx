@@ -17,6 +17,9 @@ const { width } = Dimensions.get('window');
 
 // --- Global Online Detection State (Bulletproof against Fast Refresh) ---
 let g_bridgeLastTs = 0;
+const TEST_ADMIN_EMAIL = process.env.EXPO_PUBLIC_ADMIN_TEST_EMAIL || 'admin@spms.com';
+const TEST_ADMIN_PASSWORD = process.env.EXPO_PUBLIC_ADMIN_TEST_PASSWORD || 'Admin@1234';
+
 let g_deviceLastTs = 0;
 let g_lastActivity = Date.now();
 
@@ -194,11 +197,22 @@ export default function AppIndex() {
 
   const handleLogin = async () => {
     try {
-      const userId = engineerId.trim().toLowerCase().replace(/\./g, '_');
-      const userRef = ref(database, `spms/users/${userId}`);
-      const snapshot = await get(userRef);
-      const user = snapshot.val();
-      if (user && user.password === password.trim()) {
+      const cleanEmail = engineerId.trim().toLowerCase();
+      const cleanPass = password.trim();
+      const userId = cleanEmail.replace(/\./g, '_');
+
+      const isTestAdmin = (cleanEmail === TEST_ADMIN_EMAIL.toLowerCase() || cleanEmail === 'admin') && cleanPass === TEST_ADMIN_PASSWORD;
+
+      let user = null;
+      try {
+        const userRef = ref(database, `spms/users/${userId}`);
+        const snapshot = await get(userRef);
+        user = snapshot.val();
+      } catch (err) {
+        console.warn("Firebase user lookup warning:", err);
+      }
+
+      if (user && user.password === cleanPass) {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           setUserData(user); 
           setIsLoggedIn(true);
@@ -208,6 +222,32 @@ export default function AppIndex() {
             } else {
               await AsyncStorage.setItem('spms_engineer', JSON.stringify(user));
             }
+          } catch (e) {}
+      } else if (isTestAdmin) {
+          const testAdminUser = {
+            firstName: 'System',
+            lastName: 'Admin',
+            email: TEST_ADMIN_EMAIL,
+            mobile: '+91 98765 43210',
+            password: TEST_ADMIN_PASSWORD,
+            role: 'Admin',
+            approved: true,
+            mail_sent: true,
+            createdAt: new Date().toISOString()
+          };
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          setUserData(testAdminUser); 
+          setIsLoggedIn(true);
+          try {
+            if (Platform.OS === 'web') {
+              localStorage.setItem('spms_engineer', JSON.stringify(testAdminUser));
+            } else {
+              await AsyncStorage.setItem('spms_engineer', JSON.stringify(testAdminUser));
+            }
+          } catch (e) {}
+          try {
+            const adminUserKey = TEST_ADMIN_EMAIL.toLowerCase().replace(/\./g, '_');
+            await set(ref(database, `spms/users/${adminUserKey}`), testAdminUser);
           } catch (e) {}
       } else { 
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -323,6 +363,34 @@ export default function AppIndex() {
         <ScrollView contentContainerStyle={styles.loginCenter} keyboardShouldPersistTaps="handled">
           <MaterialCommunityIcons name="security" size={100} color="#39FF14" />
           <Text style={styles.loginTitle}>SPMS</Text>
+
+          {/* Testing Credentials Banner */}
+          <View style={styles.testAdminBox}>
+            <View style={styles.testAdminHeader}>
+              <MaterialCommunityIcons name="shield-account" size={18} color="#39FF14" />
+              <Text style={styles.testAdminTitle}>TESTING CREDENTIALS (ADMIN)</Text>
+            </View>
+            <View style={styles.testAdminRow}>
+              <Text style={styles.testAdminLabel}>Admin Email:</Text>
+              <Text style={styles.testAdminValue}>{TEST_ADMIN_EMAIL}</Text>
+            </View>
+            <View style={styles.testAdminRow}>
+              <Text style={styles.testAdminLabel}>Admin Password:</Text>
+              <Text style={styles.testAdminValueHighlight}>{TEST_ADMIN_PASSWORD}</Text>
+            </View>
+            <TouchableOpacity 
+              style={styles.testAdminFillBtn}
+              onPress={() => {
+                setEngineerId(TEST_ADMIN_EMAIL);
+                setPassword(TEST_ADMIN_PASSWORD);
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }}
+            >
+              <MaterialCommunityIcons name="flash" size={16} color="#000" />
+              <Text style={styles.testAdminFillText}>Auto-Fill Admin Credentials</Text>
+            </TouchableOpacity>
+          </View>
+
           <TextInput 
             style={styles.input} 
             placeholder="Engineer Email" 
@@ -519,6 +587,72 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: '#000' },
   loginCenter: { flexGrow: 1, justifyContent: 'center', padding: 40, alignItems: 'center' },
   loginTitle: { color: '#FFF', fontSize: 24, fontWeight: '900', marginVertical: 30, letterSpacing: 2 },
+  testAdminBox: {
+    backgroundColor: '#0a1a0a',
+    width: '100%',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(57, 255, 20, 0.35)',
+    marginBottom: 20,
+  },
+  testAdminHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  testAdminTitle: {
+    color: '#39FF14',
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 1.5,
+    marginLeft: 6,
+  },
+  testAdminRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  testAdminLabel: {
+    color: '#888',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  testAdminValue: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  testAdminValueHighlight: {
+    color: '#39FF14',
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 1,
+    backgroundColor: 'rgba(57, 255, 20, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(57, 255, 20, 0.25)',
+  },
+  testAdminFillBtn: {
+    backgroundColor: '#39FF14',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    marginTop: 10,
+  },
+  testAdminFillText: {
+    color: '#000',
+    fontWeight: '900',
+    fontSize: 12,
+    letterSpacing: 0.5,
+    marginLeft: 6,
+  },
   input: { backgroundColor: '#111', width: '100%', padding: 20, borderRadius: 15, color: '#FFF', marginBottom: 15, borderWidth: 1, borderColor: '#222' },
   passwordWrapper: { flexDirection: 'row', width: '100%', marginBottom: 15, alignItems: 'center' },
   eyeIcon: { position: 'absolute', right: 20 },

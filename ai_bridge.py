@@ -6,9 +6,23 @@ import joblib
 import pandas as pd
 import numpy as np
 
+def load_dotenv(filepath=".env"):
+    if os.path.exists(filepath):
+        with open(filepath, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, val = line.split("=", 1)
+                    key = key.strip()
+                    val = val.strip().strip('"\'')
+                    if key not in os.environ:
+                        os.environ[key] = val
+
+load_dotenv()
+
 # --- INDUSTRIAL CONFIGURATION ---
-DB_URL = "https://spms-69e9e-default-rtdb.asia-southeast1.firebasedatabase.app"
-CERT_PATH = "serviceAccountKey.json"
+DB_URL = os.environ.get("EXPO_PUBLIC_FIREBASE_DATABASE_URL") or os.environ.get("FIREBASE_DATABASE_URL") or "https://spms-69e9e-default-rtdb.asia-southeast1.firebasedatabase.app"
+CERT_PATH = os.environ.get("FIREBASE_SERVICE_ACCOUNT") or "serviceAccountKey.json"
 MODEL_PATH = "spms_model.pkl"
 
 # Algorithm Constants

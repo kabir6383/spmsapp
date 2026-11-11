@@ -49,5 +49,19 @@ Once deployed, the building will be 100% autonomous regardless of whether the mo
 - Start: `npx expo start`
 - **Security**: Switching to MANUAL mode requires biometric authentication.
 
+### 4. Netlify Web Deployment
+In the Netlify project settings, open **Environment variables** and add the seven variables from `.env.example` for the deploy context. Expo embeds variables prefixed with `EXPO_PUBLIC_` during the web build, so these must be available before `npm run build` runs:
+
+```text
+EXPO_PUBLIC_FIREBASE_API_KEY
+EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN
+EXPO_PUBLIC_FIREBASE_DATABASE_URL
+EXPO_PUBLIC_FIREBASE_PROJECT_ID
+EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET
+EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+EXPO_PUBLIC_FIREBASE_APP_ID
+```
+
+Use the values from the Firebase Console web app configuration. These Firebase web configuration values are intended to be public; keep service account credentials out of Netlify and the repository. After saving the variables, trigger a **redeploy with cleared cache** in Netlify.
 ---
 **Confidential Industrial Firmware - G+5 Facility Protocol**
